@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+    <p>Count numbers: <output id="result"></output></p>
+    <input type="file" name="" id="">
+    <canvas></canvas>
+    <hr>
+    <button>Gameron</button>
+    <button>Charm</button>
+    <button>Javana</button>
+    <button>Sepiana</button>
+    <button>Vintage</button>
+    <button>Bright</button>
+    <button>Dawn</button>
+    <button>Curve</button>
+    <button>Original</button>
+
+    <script>
+        const worker = new Worker('i.js')
+        var $ = document.querySelector.bind(document)
+        const input = $('input')
+        const canvas = $('canvas');
+        const ctx = canvas.getContext('2d')
+        const btn = $('button')
+
+        input.addEventListener('change', function (e) {
+            const file = e.target.files[0]
+            const image = new Image()
+            image.src = URL.createObjectURL(file)
+
+            image.onload = function () {
+                canvas.width = image.width
+                canvas.height = image.height
+                ctx.clearRect(0, 0, image.width, image.height)
+                ctx.drawImage(image, 0, 0, image.width, image.height)
+                // post message
+                const pre = ctx.getImageData(0, 0, image.width, image.height)
+                console.log('pre', pre)
+                worker.postMessage({ imgData: pre })
+            }
+        })
+
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                const { innerText } = e.target
+                worker.postMessage({ filterName: innerText })
+            })
+        })
+
+        worker.onmessage = function (e) {
+            console.log('after', e.data.result)
+            ctx.putImageData(e.data.result, 0, 0)
+        }
+    </script>
+
+</body>
+
+</html>
