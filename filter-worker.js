@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 function Bezier(start, ctrl1, ctrl2, end, lowBound, highBound) {
     var bezier, clamp, controlPoints, endX, i, j, lerp, next, prev, t, _i, _j, _ref;
@@ -378,6 +378,7 @@ function doFilter(imgData, filterName) {
  */
 onmessage = function (e) {
     const { imgData, filterName } = e.data
+    this.console.log(imgData)
     if (imgData instanceof ImageData && !!filterName) {
         const result = doFilter(imgData, filterName)
         this.postMessage({ result })

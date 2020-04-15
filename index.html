@@ -17,7 +17,7 @@
 
     <script>
         window.onload = function () {
-            const worker = new Worker('index.js');
+            const worker = new Worker('filter-worker.es5.min.js');
             const $ = document.querySelector.bind(document);
             const input = $('input');
             const canvas = $('canvas');
