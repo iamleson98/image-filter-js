@@ -182,7 +182,7 @@ var CamanGamma = function CamanGamma(adjust) {
  * @param {{ red?: Number, green?: Number, blue?: Number }} options - contains red or green or blue
  */
 function Channels(options) {
-    console.log('options: ', options)
+    options = Object.assign({}, options)
     var chan, value;
     for (chan in options) {
         value = options[chan];
@@ -192,7 +192,6 @@ function Channels(options) {
         }
         options[chan] /= 100;
     }
-
     return function (rgba) {
         if (!!options.red) {
             if (options.red > 0) {
@@ -217,7 +216,7 @@ function Channels(options) {
         }
         return rgba;
     };
-}
+};
 
 /**
  * @param {Number} adjust
@@ -338,42 +337,40 @@ const filterMap = {
 }
 
 /**
+ * @param {ImageData} imgData
  * @param {String} filterName 
+ * @returns {ImageData}
  */
-function doFilter(filterName) {
-    filterName = filterName.toLowerCase().trim()
-    if (!!filterName) {
-        // get backyup ImageData object from store:
-        const backupImgData = store.getBackupImgData()
-        if (!!backupImgData) {
-            if (filterName === 'original' || !filterMap[filterName]) {
-                return backupImgData
-            }
-            const { width, data, height } = backupImgData
-            const resultImageData = new ImageData(width, height)
-            const rgbaFuncList = filterMap[filterName].map(filter => {
-                return filter.use(...filter.params)
-            })
-            for (let i = 0; i < data.length; i += 4) {
-                let rgba = {
-                    r: data[i],
-                    g: data[i + 1],
-                    b: data[i + 2],
-                    a: data[i + 3]
-                }
-                rgbaFuncList.forEach(rgbaFunc => {
-                    rgba = rgbaFunc(rgba)
-                })
-                resultImageData.data[i] = rgba.r
-                resultImageData.data[i + 1] = rgba.g
-                resultImageData.data[i + 2] = rgba.b
-                resultImageData.data[i + 3] = rgba.a
-            }
-            return resultImageData
+function doFilter(imgData, filterName) {
+    if (!!filterName && imgData instanceof ImageData) {
+        filterName = filterName.toLowerCase().trim()
+
+        if (!filterMap[filterName]) {
+            return imgData
         }
-        return null
+        const { width, data, height } = imgData
+        const resultImageData = new ImageData(width, height)
+        const rgbaFuncList = filterMap[filterName].map(filter => {
+            return filter.use(...filter.params)
+        })
+        for (let i = 0; i < data.length; i += 4) {
+            let rgba = {
+                r: data[i],
+                g: data[i + 1],
+                b: data[i + 2],
+                a: data[i + 3]
+            }
+            rgbaFuncList.forEach(rgbaFunc => {
+                rgba = rgbaFunc(rgba)
+            })
+            resultImageData.data[i] = rgba.r
+            resultImageData.data[i + 1] = rgba.g
+            resultImageData.data[i + 2] = rgba.b
+            resultImageData.data[i + 3] = rgba.a
+        }
+        return resultImageData
     }
-    return null
+    return imgData
 }
 
 /**
@@ -381,11 +378,10 @@ function doFilter(filterName) {
  */
 onmessage = function (e) {
     const { imgData, filterName } = e.data
-    if (!!imgData) {
-        store.setBackupImgData(imgData)
-    }
-    if (!!filterName) {
-        let result = doFilter(filterName)
+    if (imgData instanceof ImageData && !!filterName) {
+        const result = doFilter(imgData, filterName)
         this.postMessage({ result })
+    } else {
+        this.postMessage({ result: Error('You must provide both imgData and filterName') })
     }
 }
